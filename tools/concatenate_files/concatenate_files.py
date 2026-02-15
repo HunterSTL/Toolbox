@@ -1,16 +1,10 @@
-import tkinter
+import os, sys, ctypes, tkinter
 from tkinter import filedialog, messagebox, ttk
-import sys
-import ctypes
-import os
 from time import gmtime, strftime
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from core import UI_COLORS
+from core import TextUtilities as TU
 
-#GUI colors
-TITLE_BAR_COLOR ="#202020"
-BACKGROUND_COLOR = "#404040"
-BUTTON_COLOR = "#505050"
-INPUT_COLOR = "#606060"
-TEXT_COLOR = "#FFFFFF"
 LINE = "-" * 150
 
 def select_source_directory(source_entry, target_entry):
@@ -27,50 +21,6 @@ def select_target_directory(target_entry):
     if directory_path:
         target_entry.delete(0, tkinter.END)
         target_entry.insert(0, directory_path)
-
-def open_in_notepad(path):
-    import subprocess
-    import platform
-
-    try:
-        if platform.system() == "Windows":
-            os.startfile(path)
-        elif platform.system() == "Darwin": #mac
-            subprocess.run(["open", path])
-        else:   #linux
-            subprocess.run(["xdg-open", path])
-    except Exception as e:
-        messagebox.showinfo("Hint", f"Result saved at:\n{path}\n\nCould not open directly: {e}")
-
-def get_file_extensions_from_string(file_extensions_string):
-    seen_lines = set()
-    lines = []
-    for line in file_extensions_string.splitlines():
-        line = line.strip() #remove spaces before/after term
-        if not line:        #ignore empty lines
-            continue
-        if line[:1] != ".": #disregard lines that don't start with "."
-            continue
-        if line not in seen_lines:
-            seen_lines.add(line)
-            lines.append(line)
-    return lines
-
-def read_text_file(path):
-    encodings_to_try = ["utf-8", "utf-8-sig", "cp1252", "latin-1"]
-
-    for enc in encodings_to_try:
-        try:
-            with open(path, "r", encoding=enc, errors="strict") as f:
-                return f.read()
-        except Exception:
-            pass
-
-    try:
-        with open(path, "r", encoding="utf-8", errors="replace") as f:
-            return f.read()
-    except Exception:
-        return None
 
 def collect_valid_files_from_directory(directory, include_subdirs, file_extensions):
     collected_files = []
@@ -107,7 +57,7 @@ def start(source_directory_string, target_directory_string, file_extensions_stri
         return
 
     #each line in the “File extensions” field is split into a file extension
-    file_extensions = get_file_extensions_from_string(file_extensions_string)
+    file_extensions = TU.split_multiline_text_into_terms(file_extensions_string, starts_with='.')
     if len(file_extensions) == 0:
         messagebox.showerror("File extensions", f"No valid file extensions specified\n(e.g. \".txt\", \".json\", \".py\"...)")
         return
@@ -139,7 +89,7 @@ def start(source_directory_string, target_directory_string, file_extensions_stri
             last_progress = progress
 
         #read file
-        text = read_text_file(file)
+        text = TU.read_text_file(file)
         if text is None:
             continue
 
@@ -158,12 +108,12 @@ def start(source_directory_string, target_directory_string, file_extensions_stri
     with open(result_file_path, "w", encoding="utf-8") as f:
         f.write(concatenated_text)
 
-    open_in_notepad(result_file_path)
+    TU.open_in_notepad(result_file_path)
 
 def initialize_ui():
     #create GUI window with tkinter
     GUI_window = tkinter.Tk()
-    GUI_window.config(bg=BACKGROUND_COLOR)
+    GUI_window.config(bg=UI_COLORS["background"])
     GUI_window.title("Concatenate files")
 
     #load icon
@@ -188,16 +138,16 @@ def initialize_ui():
     label_source_directory = tkinter.Label(
         GUI_window,
         text="Source directory:",
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"]
     )
     label_source_directory.grid(row=0, column=0, padx=5, sticky="E")
 
     #input source directory
     entry_source_directory = tkinter.Entry(
         GUI_window,
-        bg=INPUT_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["input"],
+        fg=UI_COLORS["text"],
         width=50
     )
     entry_source_directory.grid(row=0, column=1, sticky="EW")
@@ -206,8 +156,8 @@ def initialize_ui():
     select_source_directory_button = tkinter.Button(
         GUI_window,
         text="Select",
-        bg=BUTTON_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["button"],
+        fg=UI_COLORS["text"],
         width=10,
         command=lambda: select_source_directory(entry_source_directory, entry_target_directory)
     )
@@ -217,16 +167,16 @@ def initialize_ui():
     label_file_extensions = tkinter.Label(
         GUI_window,
         text="File extensions:",
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"]
     )
     label_file_extensions.grid(row=1, column=0, padx=5, sticky="NE")
 
     #input file extensions
     entry_file_extensions = tkinter.Text(
         GUI_window,
-        bg=INPUT_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["input"],
+        fg=UI_COLORS["text"],
         height=10,
         width=20
     )
@@ -240,10 +190,10 @@ def initialize_ui():
         onvalue=True,
         offvalue=False,
         variable=include_subdirs_var,
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR,
-        activebackground=BACKGROUND_COLOR,
-        selectcolor=BACKGROUND_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"],
+        activebackground=UI_COLORS["background"],
+        selectcolor=UI_COLORS["background"]
     )
     checkbox_include_subdirs.grid(row=2, column=1, sticky="W")
 
@@ -251,16 +201,16 @@ def initialize_ui():
     label_target_directory = tkinter.Label(
         GUI_window,
         text="Target directory:",
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"]
     )
     label_target_directory.grid(row=3, column=0, padx=5, sticky="E")
 
     #input target directory
     entry_target_directory = tkinter.Entry(
         GUI_window,
-        bg=INPUT_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["input"],
+        fg=UI_COLORS["text"],
         width=50
     )
     entry_target_directory.grid(row=3, column=1, sticky="EW")
@@ -269,8 +219,8 @@ def initialize_ui():
     select_target_directory_button = tkinter.Button(
         GUI_window,
         text="Select",
-        bg=BUTTON_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["button"],
+        fg=UI_COLORS["text"],
         width=10,
         command=lambda: select_target_directory(entry_target_directory)
     )
@@ -279,7 +229,7 @@ def initialize_ui():
     #progress bar
     progress_bar_style = ttk.Style(GUI_window)
     progress_bar_style.theme_use("default")
-    progress_bar_style.configure("Custom.Horizontal.TProgressbar", background="green", troughcolor=INPUT_COLOR)
+    progress_bar_style.configure("Custom.Horizontal.TProgressbar", background="green", troughcolor=UI_COLORS["input"])
     tk_progress_bar = ttk.Progressbar(GUI_window, style="Custom.Horizontal.TProgressbar")
     tk_progress_bar.grid(row=4, column=1, columnspan=1, sticky="EW")
 
@@ -287,8 +237,8 @@ def initialize_ui():
     start_button = tkinter.Button(
         GUI_window,
         text="Start",
-        bg=BUTTON_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["button"],
+        fg=UI_COLORS["text"],
         width=10,
         command=lambda: start(
             entry_source_directory.get(),

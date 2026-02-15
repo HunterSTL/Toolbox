@@ -1,17 +1,10 @@
-import tkinter
+import os, sys, ctypes, tkinter
 from tkinter import filedialog, messagebox, ttk
-from PIL import Image, ImageTk
-import sys
-import ctypes
-import os
 from time import gmtime, strftime
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from core import UI_COLORS
+from core import TextUtilities as TU
 
-#GUI colors
-TITLE_BAR_COLOR ="#202020"
-BACKGROUND_COLOR = "#404040"
-BUTTON_COLOR = "#505050"
-INPUT_COLOR = "#606060"
-TEXT_COLOR = "#FFFFFF"
 LINE = "-" * 150
 
 def select_source_directory(source_entry, target_entry):
@@ -28,51 +21,6 @@ def select_target_directory(target_entry):
     if directory_path:
         target_entry.delete(0, tkinter.END)
         target_entry.insert(0, directory_path)
-
-def open_in_notepad(path):
-    import subprocess
-    import platform
-
-    try:
-        if platform.system() == "Windows":
-            os.startfile(path)
-        elif platform.system() == "Darwin": #mac
-            subprocess.run(["open", path])
-        else:   #linux
-            subprocess.run(["xdg-open", path])
-    except Exception as e:
-        messagebox.showinfo("Hint", f"Result saved at:\n{path}\n\nCould not open directly: {e}")
-
-def get_search_terms_from_string(search_term_string):
-    seen_lines = set()
-    lines = []
-    for line in search_term_string.splitlines():
-        line = line.strip() #remove spaces before/after term
-        if not line:        #ignore empty lines
-            continue
-        if line not in seen_lines:
-            seen_lines.add(line)
-            lines.append(line)
-    return lines
-
-def read_text_file(path):
-    encodings_to_try = ["utf-8", "utf-8-sig", "cp1252", "latin-1"]
-    last_error = None
-
-    for enc in encodings_to_try:
-        try:
-            with open(path, "r", encoding=enc, errors="strict") as f:
-                return f.read(), None
-        except Exception as e:
-            last_error = f"{type(e).__name__}: {e}"
-
-    try:
-        with open(path, "r", encoding="utf-8", errors="replace") as f:
-            return f.read(), None
-    except Exception as e:
-        specific = last_error or f"{type(e).__name__}: {e}"
-        return None, f"Read error. Last attempt failed: {specific}"
-
 
 def find_occurrences(text, search_term, case_sensitive):
     text_to_search = text if case_sensitive else text.lower()
@@ -131,10 +79,9 @@ def start_search(source_directory_string, target_directory_string, search_terms_
         return
 
     results = {}
-    errors = []
 
     #each line in the “Search terms” field becomes a search term.
-    search_terms = get_search_terms_from_string(search_terms_string)
+    search_terms = TU.split_multiline_text_into_terms(search_terms_string)
 
     #attempt to read directory
     try:
@@ -167,10 +114,7 @@ def start_search(source_directory_string, target_directory_string, search_terms_
             continue
 
         #read file
-        text, err = read_text_file(full_path)
-        if text is None:
-            errors.append((full_path, err or "Unknown error while reading"))
-            continue
+        text = TU.read_text_file(full_path)
 
         #search for occurrences of the search term and write them in the results dictionary
         for search_term in search_terms:
@@ -208,13 +152,6 @@ def start_search(source_directory_string, target_directory_string, search_terms_
         report_lines.append(f"{total_count} Matches:\n")
         report_lines.extend(tmp_report_lines)
 
-    #print errors
-    if errors:
-        report_lines.append("\nError reading the following files:")
-        for path, message in errors:
-            report_lines.append(f"\t{path}\nReason: {message}\n")
-        report_lines.append(LINE)
-
     #create and open result file
     result_file_name = "Result_" + strftime("%Y%m%d_%H_%M_%S", gmtime()) + ".txt"
     result_file_path = os.path.join(target_directory_string, result_file_name)
@@ -222,12 +159,12 @@ def start_search(source_directory_string, target_directory_string, search_terms_
     with open(result_file_path, "w") as f:
         f.write("\n".join(report_lines))
 
-    open_in_notepad(result_file_path)
+    TU.open_in_notepad(result_file_path)
 
 def initialize_ui():
     #create GUI window with tkinter
     GUI_window = tkinter.Tk()
-    GUI_window.config(bg=BACKGROUND_COLOR)
+    GUI_window.config(bg=UI_COLORS["background"])
     GUI_window.title("Search files")
 
     #load icon
@@ -252,16 +189,16 @@ def initialize_ui():
     label_source_directory = tkinter.Label(
         GUI_window,
         text="Source directory:",
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"]
     )
     label_source_directory.grid(row=0, column=0, padx=5, sticky="E")
 
     #input source directory
     entry_source_directory = tkinter.Entry(
         GUI_window,
-        bg=INPUT_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["input"],
+        fg=UI_COLORS["text"],
         width=50
     )
     entry_source_directory.grid(row=0, column=1, sticky="EW")
@@ -270,8 +207,8 @@ def initialize_ui():
     select_source_directory_button = tkinter.Button(
         GUI_window,
         text="Select",
-        bg=BUTTON_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["button"],
+        fg=UI_COLORS["text"],
         width=10,
         command=lambda: select_source_directory(entry_source_directory, entry_target_directory)
     )
@@ -281,16 +218,16 @@ def initialize_ui():
     label_search_terms = tkinter.Label(
         GUI_window,
         text="Search terms:",
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"]
     )
     label_search_terms.grid(row=1, column=0, padx=5, sticky="NE")
 
     #input search terms
     entry_search_terms = tkinter.Text(
         GUI_window,
-        bg=INPUT_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["input"],
+        fg=UI_COLORS["text"],
         height=10,
         width=20
     )
@@ -304,10 +241,10 @@ def initialize_ui():
         onvalue=True,
         offvalue=False,
         variable=case_sensitive_var,
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR,
-        activebackground=BACKGROUND_COLOR,
-        selectcolor=BACKGROUND_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"],
+        activebackground=UI_COLORS["background"],
+        selectcolor=UI_COLORS["background"]
     )
     checkbox_case_sensitive.grid(row=2, column=1, sticky="W")
 
@@ -315,16 +252,16 @@ def initialize_ui():
     label_target_directory = tkinter.Label(
         GUI_window,
         text="Target directory:",
-        bg=BACKGROUND_COLOR,
-        fg=TEXT_COLOR
+        bg=UI_COLORS["background"],
+        fg=UI_COLORS["text"]
     )
     label_target_directory.grid(row=3, column=0, padx=5, sticky="E")
 
     #input target directory
     entry_target_directory = tkinter.Entry(
         GUI_window,
-        bg=INPUT_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["input"],
+        fg=UI_COLORS["text"],
         width=50
     )
     entry_target_directory.grid(row=3, column=1, sticky="EW")
@@ -333,8 +270,8 @@ def initialize_ui():
     select_target_directory_button = tkinter.Button(
         GUI_window,
         text="Select",
-        bg=BUTTON_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["button"],
+        fg=UI_COLORS["text"],
         width=10,
         command=lambda: select_target_directory(entry_target_directory)
     )
@@ -343,7 +280,7 @@ def initialize_ui():
     #progress bar
     progress_bar_style = ttk.Style(GUI_window)
     progress_bar_style.theme_use("default")
-    progress_bar_style.configure("Custom.Horizontal.TProgressbar", background="green", troughcolor=INPUT_COLOR)
+    progress_bar_style.configure("Custom.Horizontal.TProgressbar", background="green", troughcolor=UI_COLORS["input"])
     tk_progress_bar = ttk.Progressbar(GUI_window, style="Custom.Horizontal.TProgressbar")
     tk_progress_bar.grid(row=4, column=1, columnspan=1, sticky="EW")
 
@@ -351,8 +288,8 @@ def initialize_ui():
     search_button = tkinter.Button(
         GUI_window,
         text="Start",
-        bg=BUTTON_COLOR,
-        fg=TEXT_COLOR,
+        bg=UI_COLORS["button"],
+        fg=UI_COLORS["text"],
         width=10,
         command=lambda: start_search(
             entry_source_directory.get(),

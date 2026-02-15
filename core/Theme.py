@@ -1,0 +1,14 @@
+#GUI colors
+TITLE_BAR_COLOR ="#202020"
+BACKGROUND_COLOR = "#404040"
+BUTTON_COLOR = "#505050"
+INPUT_COLOR = "#606060"
+TEXT_COLOR = "#FFFFFF"
+
+UI_COLORS = {
+    "titlebar": TITLE_BAR_COLOR,
+    "background": BACKGROUND_COLOR,
+    "button": BUTTON_COLOR,
+    "input": INPUT_COLOR,
+    "text": TEXT_COLOR
+}
