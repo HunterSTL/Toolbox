@@ -1,5 +1,6 @@
 import tkinter
 from tkinter import filedialog, messagebox, ttk
+import sys
 import ctypes
 import os
 from time import gmtime, strftime
@@ -28,10 +29,18 @@ def select_target_directory(target_entry):
         target_entry.insert(0, directory_path)
 
 def open_in_notepad(path):
+    import subprocess
+    import platform
+
     try:
-        os.startfile(path)
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin": #mac
+            subprocess.run(["open", path])
+        else:   #linux
+            subprocess.run(["xdg-open", path])
     except Exception as e:
-        messagebox.showinfo("Hint", f"Result saved at:\n{path}\n\nCould not open notepad directly: {e}")
+        messagebox.showinfo("Hint", f"Result saved at:\n{path}\n\nCould not open directly: {e}")
 
 def get_file_extensions_from_string(file_extensions_string):
     seen_lines = set()
@@ -143,7 +152,8 @@ def start(source_directory_string, target_directory_string, file_extensions_stri
     progress_bar["value"] = 0
 
     #create and open result file
-    result_file_path = target_directory_string + "\\Result_" + strftime("%Y%m%d_%H_%M_%S", gmtime()) + ".txt"
+    result_file_name = "Result_" + strftime("%Y%m%d_%H_%M_%S", gmtime()) + ".txt"
+    result_file_path = os.path.join(target_directory_string, result_file_name)
 
     with open(result_file_path, "w", encoding="utf-8") as f:
         f.write(concatenated_text)
@@ -155,16 +165,24 @@ def initialize_ui():
     GUI_window = tkinter.Tk()
     GUI_window.config(bg=BACKGROUND_COLOR)
     GUI_window.title("Concatenate files")
-    icon_path = os.path.join(os.path.dirname(__file__), "icon.ico")
-    GUI_window.iconbitmap(icon_path)
 
-    #force dark mode for the title bar
-    ctypes.windll.dwmapi.DwmSetWindowAttribute(
-        ctypes.windll.user32.GetParent(GUI_window.winfo_id()),
-        20,
-        ctypes.byref(ctypes.c_int(1)),
-        ctypes.sizeof(ctypes.c_int(1))
-    )
+    #load icon
+    icon_path = os.path.join(os.path.dirname(__file__), "icon.png")
+    if os.path.exists(icon_path):
+        icon_image = tkinter.PhotoImage(file=icon_path)
+        GUI_window.iconphoto(True, icon_image)
+
+    if sys.platform == "win32":
+        try:
+            #force dark mode for the title bar
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                ctypes.windll.user32.GetParent(GUI_window.winfo_id()),
+                20,
+                ctypes.byref(ctypes.c_int(1)),
+                ctypes.sizeof(ctypes.c_int(1))
+            )
+        except Exception:
+            pass
 
     #label source directory
     label_source_directory = tkinter.Label(
