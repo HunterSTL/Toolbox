@@ -1,7 +1,7 @@
 import os, subprocess, platform
 from tkinter import messagebox
 
-def read_text_file(path) -> str:
+def read_text_file(path) -> str | None:
     encodings_to_try = ["utf-8", "utf-8-sig", "cp1252", "latin-1"]
 
     for encoding in encodings_to_try:
@@ -28,18 +28,13 @@ def open_in_notepad(path) -> None:
     except Exception as e:
         messagebox.showinfo("Hint", f"Result saved at:\n{path}\n\nCould not open directly: {e}")
 
-def get_file_extensions_from_string(string) -> list:
-    return split_multiline_text_into_terms(string, starts_with='.')
-
-def get_search_terms_from_string(search_term_string) -> list:
-    return split_multiline_text_into_terms(search_term_string)
-
 def split_multiline_text_into_terms(string, starts_with: str = None) -> list:
-    """Split multiline `string` into a list of unique, stripped terms.
+    """
+    split multiline "string" into a list of unique, stripped terms
 
-    -Ignores empty lines.
-    -Preserves original order while removing duplicates.
-    -If `starts_with` is provided, only lines beginning with that prefix are kept.
+    -ignores empty lines
+    -preserves original order while removing duplicates
+    -if starts_with is provided, only lines beginning with that prefix are kept
     """
     seen = set()
     terms = []

@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox, ttk
 from time import gmtime, strftime
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from core import UI_COLORS
-from core import TextUtilities as TU
+from core import text_utilities as tu
 
 LINE = "-" * 150
 
@@ -81,7 +81,7 @@ def start_search(source_directory_string, target_directory_string, search_terms_
     results = {}
 
     #each line in the “Search terms” field becomes a search term.
-    search_terms = TU.split_multiline_text_into_terms(search_terms_string)
+    search_terms = tu.split_multiline_text_into_terms(search_terms_string)
 
     #attempt to read directory
     try:
@@ -114,7 +114,7 @@ def start_search(source_directory_string, target_directory_string, search_terms_
             continue
 
         #read file
-        text = TU.read_text_file(full_path)
+        text = tu.read_text_file(full_path)
 
         #search for occurrences of the search term and write them in the results dictionary
         for search_term in search_terms:
@@ -159,7 +159,7 @@ def start_search(source_directory_string, target_directory_string, search_terms_
     with open(result_file_path, "w") as f:
         f.write("\n".join(report_lines))
 
-    TU.open_in_notepad(result_file_path)
+    tu.open_in_notepad(result_file_path)
 
 def initialize_ui():
     #create GUI window with tkinter

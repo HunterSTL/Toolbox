@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox, ttk
 from time import gmtime, strftime
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from core import UI_COLORS
-from core import TextUtilities as TU
+from core import text_utilities as tu
 
 LINE = "-" * 150
 
@@ -57,7 +57,7 @@ def start(source_directory_string, target_directory_string, file_extensions_stri
         return
 
     #each line in the “File extensions” field is split into a file extension
-    file_extensions = TU.split_multiline_text_into_terms(file_extensions_string, starts_with='.')
+    file_extensions = tu.split_multiline_text_into_terms(file_extensions_string, starts_with='.')
     if len(file_extensions) == 0:
         messagebox.showerror("File extensions", f"No valid file extensions specified\n(e.g. \".txt\", \".json\", \".py\"...)")
         return
@@ -89,7 +89,7 @@ def start(source_directory_string, target_directory_string, file_extensions_stri
             last_progress = progress
 
         #read file
-        text = TU.read_text_file(file)
+        text = tu.read_text_file(file)
         if text is None:
             continue
 
@@ -108,7 +108,7 @@ def start(source_directory_string, target_directory_string, file_extensions_stri
     with open(result_file_path, "w", encoding="utf-8") as f:
         f.write(concatenated_text)
 
-    TU.open_in_notepad(result_file_path)
+    tu.open_in_notepad(result_file_path)
 
 def initialize_ui():
     #create GUI window with tkinter
